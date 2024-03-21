@@ -142,6 +142,11 @@ func (r *KedaControllerReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	logger.Info("Reconciling KedaController")
 
+	if isManagementPaused() {
+		logger.Info("Keda is not managed, skipping reconciliation")
+		return ctrl.Result{}, nil
+	}
+
 	// Fetch the KedaController instance
 	instance := &kedav1alpha1.KedaController{}
 	err := r.Client.Get(ctx, req.NamespacedName, instance)
@@ -967,4 +972,10 @@ func (r *KedaControllerReconciler) checkAuditLogVolumeExists(name string, ctx co
 	}
 
 	return nil
+}
+
+// isManagementPaused returns true if the Kedify agent is paused
+// this envar is undocumented and can be removed at any time
+func isManagementPaused() bool {
+	return os.Getenv("KEDIFY_PAUSE_MANAGEMENT") != ""
 }
